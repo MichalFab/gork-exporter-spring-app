@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-logging-app
+  labels:
+    app: spring-logging-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-logging-app
+      sidecar: grok-exporter
+  template:
+    metadata:
+      labels:
+        app: spring-logging-app
+        sidecar: grok-exporter
+    spec:
+      containers:
+        - name: spring-logging-app
+          image: docker.io/michf/spring-logging-app:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: logs
+              mountPath: /logs/
+        - name: grok
+          image: palobo/grok_exporter
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9144
+              protocol: TCP
+          volumeMounts:
+            - name: grok-config-volume
+              mountPath: /etc/grok_exporter
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: grok-config-volume
+          configMap:
+            name: grok-exporter
+        - name: logs
+          emptyDir: {}

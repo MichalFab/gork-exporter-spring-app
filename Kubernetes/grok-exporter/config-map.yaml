@@ -1,0 +1,31 @@
+kind: ConfigMap
+metadata:
+  name: grok-exporter
+apiVersion: v1
+data:
+  config.yml: |-
+    global:
+      config_version: 2
+    input:
+      type: file
+      fail_on_missing_logfile: false
+      path: /logs/applog.log
+    grok:
+      patterns_dir: ./patterns
+    metrics:
+      - type: histogram
+        name: service_call
+        help: Services call times
+        match: '%{DATE} %{TIME} %{WORD:service} connection time= %{INT:val}'
+        value: '{{.val}}'
+  buckets: [100, 1000, 3000]
+    labels:
+      service    : '{{.service}}'
+    - type: counter
+      name: hello_requests_total
+      help: Hello controller requests counter
+      match: '%{DATE} %{TIME} HelloController request from: %{USER:user}'
+      labels:
+        user    : '{{.user}}'
+    server:
+      port: 9144
